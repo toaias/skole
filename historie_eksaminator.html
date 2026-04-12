@@ -1,0 +1,2020 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historie-eksaminatoren – VG3 Muntlig øving</title>
+    <meta name="description" content="Interaktiv muntlig eksamensøvingsverktøy for VG3 historie, perioden 1750–1950">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #0a0a1a;
+            --bg-card: rgba(255,255,255,0.03);
+            --bg-card-hover: rgba(255,255,255,0.06);
+            --border: rgba(255,255,255,0.08);
+            --border-hover: rgba(255,255,255,0.15);
+            --text-primary: #f0f0f5;
+            --text-secondary: #9a9ab0;
+            --text-muted: #6a6a80;
+            --accent-gold: #f0b35a;
+            --accent-blue: #5b8def;
+            --accent-purple: #9b6dff;
+            --accent-green: #4ecdc4;
+            --accent-red: #ff6b6b;
+            --accent-orange: #ffa45b;
+            --gradient-main: linear-gradient(135deg, #5b8def, #9b6dff);
+            --gradient-warm: linear-gradient(135deg, #f0b35a, #ff6b6b);
+            --gradient-cool: linear-gradient(135deg, #4ecdc4, #5b8def);
+            --gradient-fire: linear-gradient(135deg, #ff6b6b, #ffa45b);
+            --gradient-royal: linear-gradient(135deg, #9b6dff, #ff6b9d);
+            --gradient-earth: linear-gradient(135deg, #8B7355, #f0b35a);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Background effect */
+        .bg-glow {
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: radial-gradient(circle at 30% 40%, rgba(91,141,239,0.06) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 60%, rgba(155,109,255,0.05) 0%, transparent 50%),
+                        radial-gradient(circle at 50% 80%, rgba(78,205,196,0.04) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: glowPulse 20s ease infinite alternate;
+        }
+
+        @keyframes glowPulse {
+            0% { transform: scale(1) rotate(0deg); }
+            100% { transform: scale(1.1) rotate(5deg); }
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInFast { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes scaleIn { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        @keyframes ripple {
+            0% { transform: scale(0); opacity: 0.6; }
+            100% { transform: scale(4); opacity: 0; }
+        }
+        @keyframes gradientFlow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.95); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.9rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            border: none;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(.4,0,.2,1);
+            letter-spacing: 0.3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+
+        .btn-primary {
+            background: var(--gradient-main);
+            color: white;
+            box-shadow: 0 4px 20px rgba(91,141,239,0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 8px 30px rgba(91,141,239,0.5); }
+
+        .btn-warm {
+            background: var(--gradient-warm);
+            color: white;
+            box-shadow: 0 4px 20px rgba(240,179,90,0.3);
+        }
+        .btn-warm:hover { box-shadow: 0 8px 30px rgba(240,179,90,0.5); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+        }
+        .btn-outline:hover { background: var(--bg-card-hover); border-color: var(--border-hover); color: var(--text-primary); }
+
+        .btn-green {
+            background: linear-gradient(135deg, #4ecdc4, #2ecc71);
+            color: white;
+            box-shadow: 0 4px 20px rgba(78,205,196,0.3);
+        }
+
+        .btn-fire {
+            background: var(--gradient-fire);
+            color: white;
+            box-shadow: 0 4px 20px rgba(255,107,107,0.3);
+        }
+        .btn-fire:hover { box-shadow: 0 8px 30px rgba(255,107,107,0.5); }
+
+        .btn-sm { padding: 0.6rem 1.2rem; font-size: 0.85rem; border-radius: 10px; }
+
+        .btn-lg { padding: 1.1rem 2.5rem; font-size: 1.1rem; border-radius: 16px; }
+
+        .btn-icon {
+            width: 44px; height: 44px;
+            padding: 0;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        /* Ripple effect */
+        .btn::after {
+            content: '';
+            position: absolute;
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: scale(0);
+            pointer-events: none;
+        }
+        .btn:active::after {
+            animation: ripple 0.6s ease-out;
+        }
+
+        /* ===== SETTINGS BUTTON ===== */
+        .settings-btn {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        .settings-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); border-color: var(--border-hover); }
+        .settings-btn.has-key { border-color: rgba(78,205,196,0.4); color: var(--accent-green); }
+
+        /* ===== START SCREEN ===== */
+        .start-screen {
+            text-align: center;
+            padding: 2rem 1rem;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .hero-section {
+            margin-bottom: 3rem;
+        }
+
+        .hero-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .hero-title {
+            font-size: 2.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f0b35a, #ff6b6b, #9b6dff);
+            background-size: 200% 200%;
+            animation: gradientFlow 5s ease infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.6rem;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .hero-period {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 1rem;
+            background: rgba(155,109,255,0.1);
+            border: 1px solid rgba(155,109,255,0.2);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            color: var(--accent-purple);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .hero-description {
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            margin: 1rem auto 0;
+            line-height: 1.7;
+            max-width: 600px;
+        }
+
+        /* ===== TOPIC GRID ===== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+            padding-left: 0.5rem;
+        }
+        .section-header h2 {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        .section-header .line {
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .topic-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(.4,0,.2,1);
+            position: relative;
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .topic-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .topic-card:hover::before { opacity: 1; }
+        .topic-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+        }
+
+        .topic-card.selected {
+            border-color: var(--accent-blue);
+            background: rgba(91,141,239,0.06);
+        }
+
+        .topic-card .topic-icon {
+            font-size: 2rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+
+        .topic-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .topic-card .topic-period {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.6rem;
+            font-weight: 500;
+        }
+
+        .topic-card .topic-desc {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .topic-card .topic-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.8rem;
+        }
+
+        .topic-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            border: 1px solid;
+        }
+
+        /* Topic-specific colors */
+        .topic-card[data-topic="industri"]::before { background: var(--gradient-earth); }
+        .topic-card[data-topic="industri"] .topic-tag { background: rgba(139,115,85,0.1); color: #c4a06a; border-color: rgba(139,115,85,0.2); }
+
+        .topic-card[data-topic="imperialisme"]::before { background: var(--gradient-royal); }
+        .topic-card[data-topic="imperialisme"] .topic-tag { background: rgba(155,109,255,0.1); color: var(--accent-purple); border-color: rgba(155,109,255,0.2); }
+
+        .topic-card[data-topic="ww1"]::before { background: var(--gradient-fire); }
+        .topic-card[data-topic="ww1"] .topic-tag { background: rgba(255,107,107,0.1); color: var(--accent-red); border-color: rgba(255,107,107,0.2); }
+
+        .topic-card[data-topic="mellomkrig"]::before { background: var(--gradient-warm); }
+        .topic-card[data-topic="mellomkrig"] .topic-tag { background: rgba(240,179,90,0.1); color: var(--accent-gold); border-color: rgba(240,179,90,0.2); }
+
+        .topic-card[data-topic="ww2"]::before { background: linear-gradient(135deg, #ff4444, #880000); }
+        .topic-card[data-topic="ww2"] .topic-tag { background: rgba(255,68,68,0.1); color: #ff6b6b; border-color: rgba(255,68,68,0.2); }
+
+        .topic-card[data-topic="kaldkrig"]::before { background: var(--gradient-cool); }
+        .topic-card[data-topic="kaldkrig"] .topic-tag { background: rgba(78,205,196,0.1); color: var(--accent-green); border-color: rgba(78,205,196,0.2); }
+
+        /* ===== RANDOM TOPIC CARD ===== */
+        .random-card {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, rgba(240,179,90,0.06), rgba(255,107,107,0.06), rgba(155,109,255,0.06));
+            border: 1px dashed rgba(240,179,90,0.3);
+            border-radius: 18px;
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            transition: all 0.4s;
+            display: flex;
+            align-items: center;
+            gap: 1.2rem;
+            text-align: left;
+        }
+        .random-card:hover {
+            background: linear-gradient(135deg, rgba(240,179,90,0.1), rgba(255,107,107,0.1), rgba(155,109,255,0.1));
+            border-color: rgba(240,179,90,0.5);
+            transform: translateY(-3px);
+        }
+        .random-card .dice {
+            font-size: 2.5rem;
+            animation: float 2.5s ease infinite;
+        }
+        .random-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--accent-gold);
+        }
+        .random-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* ===== LEVEL PICKER ===== */
+        .level-picker {
+            animation: slideUp 0.5s ease;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .level-picker h2 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-picker .chosen-topic {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1.2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            font-size: 0.95rem;
+            margin-bottom: 2rem;
+        }
+
+        .level-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
+            max-width: 750px;
+            margin: 0 auto 2rem;
+        }
+
+        .level-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.8rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(.4,0,.2,1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .level-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+        }
+        .level-card:hover {
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+        }
+
+        .level-card .grade-range {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .level-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .level-card p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        .level-card .level-keywords {
+            margin-top: 0.8rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            justify-content: center;
+        }
+        .level-card .level-keyword {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .level-card:nth-child(1)::before { background: var(--gradient-cool); }
+        .level-card:nth-child(1) .grade-range { color: var(--accent-green); }
+        .level-card:nth-child(1) .level-keyword { background: rgba(78,205,196,0.1); color: var(--accent-green); border: 1px solid rgba(78,205,196,0.2); }
+
+        .level-card:nth-child(2)::before { background: var(--gradient-warm); }
+        .level-card:nth-child(2) .grade-range { color: var(--accent-gold); }
+        .level-card:nth-child(2) .level-keyword { background: rgba(240,179,90,0.1); color: var(--accent-gold); border: 1px solid rgba(240,179,90,0.2); }
+
+        .level-card:nth-child(3)::before { background: var(--gradient-royal); }
+        .level-card:nth-child(3) .grade-range { color: var(--accent-purple); }
+        .level-card:nth-child(3) .level-keyword { background: rgba(155,109,255,0.1); color: var(--accent-purple); border: 1px solid rgba(155,109,255,0.2); }
+
+        /* ===== MODE PICKER ===== */
+        .mode-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.2rem;
+            max-width: 750px;
+            margin: 0 auto 2rem;
+        }
+
+        .mode-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1.8rem 1.2rem;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(.4,0,.2,1);
+            text-align: center;
+        }
+        .mode-card:hover {
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+        }
+        .mode-card .mode-icon {
+            font-size: 2.2rem;
+            margin-bottom: 0.6rem;
+            display: block;
+        }
+        .mode-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+        .mode-card p {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.4;
+        }
+
+        /* ===== EXAM SESSION (CHAT) ===== */
+        .exam-session {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .exam-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0.8rem 1.3rem;
+            margin-bottom: 1.2rem;
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 1rem;
+            z-index: 10;
+        }
+
+        .exam-top-left {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .exam-top-left .topic-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.8rem;
+            background: rgba(155,109,255,0.1);
+            border: 1px solid rgba(155,109,255,0.2);
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--accent-purple);
+        }
+
+        .exam-top-left .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .exam-timer {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+        .exam-timer.warning { color: var(--accent-orange); }
+        .exam-timer.critical { color: var(--accent-red); animation: pulse 1s infinite; }
+
+        .question-counter {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            padding: 0.3rem 0.8rem;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+        }
+
+        /* Chat messages */
+        .chat-area {
+            min-height: 400px;
+            margin-bottom: 1.2rem;
+        }
+
+        .message {
+            display: flex;
+            gap: 0.8rem;
+            margin-bottom: 1.2rem;
+            animation: fadeInFast 0.4s ease;
+        }
+
+        .message.sensor { justify-content: flex-start; }
+        .message.elev { justify-content: flex-end; }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .message.sensor .message-avatar {
+            background: linear-gradient(135deg, rgba(155,109,255,0.2), rgba(91,141,239,0.2));
+            border: 1px solid rgba(155,109,255,0.3);
+        }
+
+        .message.elev .message-avatar {
+            background: linear-gradient(135deg, rgba(78,205,196,0.2), rgba(91,141,239,0.2));
+            border: 1px solid rgba(78,205,196,0.3);
+            order: 2;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 1rem 1.3rem;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.7;
+            position: relative;
+        }
+
+        .message.sensor .message-bubble {
+            background: rgba(155,109,255,0.08);
+            border: 1px solid rgba(155,109,255,0.15);
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.elev .message-bubble {
+            background: rgba(78,205,196,0.08);
+            border: 1px solid rgba(78,205,196,0.15);
+            border-bottom-right-radius: 6px;
+        }
+
+        .message-bubble .message-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 0.4rem;
+            display: block;
+        }
+
+        .message.sensor .message-label { color: var(--accent-purple); }
+        .message.elev .message-label { color: var(--accent-green); }
+
+        .message-bubble p { margin-bottom: 0.4rem; }
+        .message-bubble p:last-child { margin-bottom: 0; }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            padding: 0.8rem 1.2rem;
+        }
+        .typing-indicator span {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            opacity: 0.4;
+        }
+        .typing-indicator span:nth-child(1) { animation: typingDot 1.4s 0s infinite; }
+        .typing-indicator span:nth-child(2) { animation: typingDot 1.4s 0.2s infinite; }
+        .typing-indicator span:nth-child(3) { animation: typingDot 1.4s 0.4s infinite; }
+        @keyframes typingDot {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        /* Input area */
+        .input-area {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            padding: 1rem;
+            display: flex;
+            gap: 0.8rem;
+            align-items: flex-end;
+            transition: border-color 0.3s;
+        }
+        .input-area:focus-within {
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(91,141,239,0.08);
+        }
+
+        .input-area textarea {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: none;
+            min-height: 24px;
+            max-height: 150px;
+            outline: none;
+        }
+        .input-area textarea::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            background: var(--gradient-main);
+            border: none;
+            color: white;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            flex-shrink: 0;
+        }
+        .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 20px rgba(91,141,239,0.4); }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* Quick action buttons */
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+        .quick-action {
+            padding: 0.5rem 1rem;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .quick-action:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+
+        /* ===== ASSESSMENT / RESULTS ===== */
+        .assessment-screen {
+            padding: 2rem 0;
+            animation: fadeIn 0.8s ease;
+        }
+
+        .assessment-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .assessment-header .emoji {
+            font-size: 4rem;
+            display: block;
+            margin-bottom: 0.8rem;
+            animation: bounceIn 0.8s ease;
+        }
+        .assessment-header h2 {
+            font-size: 2rem;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .assessment-grade {
+            text-align: center;
+            margin-bottom: 2rem;
+            animation: scaleIn 0.6s ease 0.3s both;
+        }
+        .grade-circle {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            position: relative;
+        }
+        .grade-circle::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 50%;
+            padding: 4px;
+            background: conic-gradient(var(--accent-blue), var(--accent-purple), var(--accent-green), var(--accent-blue));
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: spin 4s linear infinite;
+        }
+        .grade-circle.high { background: rgba(78,205,196,0.1); color: var(--accent-green); }
+        .grade-circle.mid { background: rgba(240,179,90,0.1); color: var(--accent-gold); }
+        .grade-circle.low { background: rgba(255,107,107,0.1); color: var(--accent-red); }
+
+        .assessment-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .assess-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            animation: slideUp 0.5s ease both;
+        }
+        .assess-card:nth-child(1) { animation-delay: 0.2s; }
+        .assess-card:nth-child(2) { animation-delay: 0.3s; }
+        .assess-card:nth-child(3) { animation-delay: 0.4s; }
+        .assess-card:nth-child(4) { animation-delay: 0.5s; }
+
+        .assess-card h3 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .assess-card ul {
+            list-style: none;
+            padding: 0;
+        }
+        .assess-card li {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            padding: 0.4rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .assess-card li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.75rem;
+            width: 6px; height: 6px;
+            border-radius: 50%;
+        }
+
+        .assess-card.strengths li::before { background: var(--accent-green); }
+        .assess-card.improvements li::before { background: var(--accent-orange); }
+        .assess-card.topics-covered li::before { background: var(--accent-blue); }
+        .assess-card.tips li::before { background: var(--accent-purple); }
+
+        .assess-card p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        /* Full width card */
+        .assess-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .assessment-actions {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        /* ===== LOTTERY OVERLAY ===== */
+        .lottery-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            z-index: 300;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .lottery-wheel {
+            width: 280px;
+            height: 280px;
+            border-radius: 50%;
+            border: 4px solid rgba(240,179,90,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        .lottery-wheel::before {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px dashed rgba(240,179,90,0.2);
+            animation: spin 10s linear infinite;
+        }
+
+        .lottery-topic {
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-align: center;
+            padding: 1rem;
+            transition: all 0.15s;
+        }
+        .lottery-topic .topic-emoji {
+            font-size: 3rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .lottery-wheel.spinning .lottery-topic {
+            animation: pulse 0.15s infinite;
+        }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal {
+            background: #151528;
+            border: 1px solid var(--border-hover);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            animation: scaleIn 0.3s ease;
+        }
+        .modal h3 { font-size: 1.2rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal p { font-size: 0.85rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1.2rem; }
+        .modal input[type="password"],
+        .modal input[type="text"] {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            transition: border-color 0.3s;
+        }
+        .modal input:focus { outline: none; border-color: var(--accent-blue); }
+        .modal-buttons { display: flex; gap: 0.8rem; justify-content: flex-end; }
+        .modal .key-status {
+            font-size: 0.8rem;
+            padding: 0.5rem 0.8rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+        .modal .key-status.active { background: rgba(78,205,196,0.1); color: var(--accent-green); border: 1px solid rgba(78,205,196,0.2); }
+        .modal .key-status.none { background: rgba(255,107,107,0.1); color: var(--accent-red); border: 1px solid rgba(255,107,107,0.2); }
+
+        /* ===== PROGRESS DOTS ===== */
+        .progress-dots {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .progress-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.3s;
+        }
+        .progress-dot.active {
+            background: var(--accent-blue);
+            box-shadow: 0 0 10px rgba(91,141,239,0.4);
+        }
+        .progress-dot.done {
+            background: var(--accent-green);
+        }
+
+        .hidden { display: none !important; }
+
+        /* ===== LOADING DOTS ===== */
+        .loading-dots {
+            display: inline-flex;
+            gap: 4px;
+            align-items: center;
+        }
+        .loading-dots span {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--accent-purple);
+            animation: dotPulse 1.4s infinite;
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotPulse {
+            0%, 80%, 100% { transform: scale(0.4); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 700px) {
+            .container { padding: 1rem; }
+            .hero-title { font-size: 2rem; }
+            .topic-grid { grid-template-columns: 1fr; }
+            .level-cards, .mode-cards { grid-template-columns: 1fr; }
+            .assessment-cards { grid-template-columns: 1fr; }
+            .exam-top-bar { flex-direction: column; gap: 0.6rem; position: static; }
+            .message-bubble { max-width: 88%; }
+            .settings-btn { top: 0.8rem; right: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-glow"></div>
+
+    <!-- Settings removed for student version -->
+
+    <div class="container">
+        <!-- ========== SCREEN 1: START ========== -->
+        <div id="startScreen" class="start-screen">
+            <div class="hero-section">
+                <span class="hero-icon">🏛️</span>
+                <h1 class="hero-title">Historie-eksaminatoren</h1>
+                <p class="hero-subtitle">Muntlig vurdering – VG3</p>
+                <div class="hero-period">📅 Perioden 1750–1950</div>
+                <p class="hero-description">
+                    Øv til muntlig eksamen med en KI-drevet sensor som tilpasser spørsmålene til ditt nivå.
+                    Velg tema, vanskelighetsgrad og modus – og bli utfordret på årsakssammenhenger, historiske linjer og faglig drøfting.
+                </p>
+            </div>
+
+            <div class="section-header">
+                <h2>📚 Velg tema</h2>
+                <div class="line"></div>
+            </div>
+
+            <div class="topic-grid" id="topicGrid"></div>
+        </div>
+
+        <!-- ========== SCREEN 2: LEVEL PICKER ========== -->
+        <div id="levelScreen" class="hidden">
+            <div class="level-picker">
+                <div class="progress-dots">
+                    <div class="progress-dot done"></div>
+                    <div class="progress-dot active"></div>
+                    <div class="progress-dot"></div>
+                </div>
+                <h2>Velg nivå</h2>
+                <div class="chosen-topic" id="chosenTopicBadge"></div>
+
+                <div class="level-cards">
+                    <div class="level-card" onclick="selectLevel('grunnleggende')">
+                        <span class="grade-range">2–3</span>
+                        <h3>Grunnleggende</h3>
+                        <p>Fokus på faktakunnskap og redegjørelse. Gode startspørsmål.</p>
+                        <div class="level-keywords">
+                            <span class="level-keyword">Redegjør</span>
+                            <span class="level-keyword">Beskriv</span>
+                            <span class="level-keyword">Nevn</span>
+                        </div>
+                    </div>
+                    <div class="level-card" onclick="selectLevel('videregaende')">
+                        <span class="grade-range">4–5</span>
+                        <h3>Videregående</h3>
+                        <p>Fokus på årsaker, virkninger og sammenhenger mellom hendelser.</p>
+                        <div class="level-keywords">
+                            <span class="level-keyword">Forklar</span>
+                            <span class="level-keyword">Sammenlign</span>
+                            <span class="level-keyword">Analyser</span>
+                        </div>
+                    </div>
+                    <div class="level-card" onclick="selectLevel('hoyt')">
+                        <span class="grade-range">6</span>
+                        <h3>Høyt nivå</h3>
+                        <p>Fokus på drøfting, perspektiver, historiebruk og lange linjer.</p>
+                        <div class="level-keywords">
+                            <span class="level-keyword">Drøft</span>
+                            <span class="level-keyword">Vurder</span>
+                            <span class="level-keyword">Kritisk</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SCREEN 3: MODE PICKER ========== -->
+        <div id="modeScreen" class="hidden">
+            <div class="level-picker">
+                <div class="progress-dots">
+                    <div class="progress-dot done"></div>
+                    <div class="progress-dot done"></div>
+                    <div class="progress-dot active"></div>
+                </div>
+                <h2>Velg modus</h2>
+                <div class="chosen-topic" id="chosenSummaryBadge"></div>
+
+                <div class="mode-cards">
+                    <div class="mode-card" onclick="selectMode('eksamen')">
+                        <span class="mode-icon">🎓</span>
+                        <h3>Simulert eksamen</h3>
+                        <p>En realistisk 15-minutters samtale der sensoren stiller spørsmål og følger opp svarene dine.</p>
+                    </div>
+                    <div class="mode-card" onclick="selectMode('lynquiz')">
+                        <span class="mode-icon">⚡</span>
+                        <h3>Lyn-quiz</h3>
+                        <p>10 raske spørsmål for å sjekke faktakunnskapene dine. Kort og effektivt!</p>
+                    </div>
+                    <div class="mode-card" onclick="selectMode('advokat')">
+                        <span class="mode-icon">😈</span>
+                        <h3>Djevelens advokat</h3>
+                        <p>Sensoren utfordrer alle påstandene dine. Tren på å forsvare argumentene dine!</p>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline btn-sm" onclick="goToLevel()" style="margin-top: 0.5rem;">← Tilbake</button>
+            </div>
+        </div>
+
+        <!-- ========== SCREEN 4: EXAM SESSION ========== -->
+        <div id="examSession" class="hidden">
+            <div class="exam-session">
+                <div class="exam-top-bar">
+                    <div class="exam-top-left">
+                        <span class="topic-badge" id="examTopicBadge"></span>
+                        <span class="level-badge" id="examLevelBadge"></span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:0.8rem;">
+                        <span class="question-counter" id="questionCounter">Spørsmål: 0</span>
+                        <div class="exam-timer" id="examTimer">
+                            <span>⏱️</span>
+                            <span id="examTimerDisplay">15:00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-area" id="chatArea"></div>
+
+                <div class="quick-actions" id="quickActions"></div>
+
+                <div class="input-area" id="inputArea">
+                    <textarea id="userInput" placeholder="Skriv svaret ditt her..." rows="1" onkeydown="handleInputKey(event)" oninput="autoResize(this)"></textarea>
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+                </div>
+
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-top:0.8rem;">
+                    <button class="btn btn-outline btn-sm" onclick="confirmGoHome()">🏠 Avslutt</button>
+                    <button class="btn btn-fire btn-sm" id="finishExamBtn" onclick="requestAssessment()">📋 Få vurdering</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== SCREEN 5: ASSESSMENT ========== -->
+        <div id="assessmentScreen" class="hidden"></div>
+    </div>
+
+
+
+    <!-- ========== LOTTERY OVERLAY ========== -->
+    <div id="lotteryOverlay" class="lottery-overlay hidden">
+        <div class="lottery-wheel" id="lotteryWheel">
+            <div class="lottery-topic" id="lotteryTopic"></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:0.9rem;" id="lotteryStatus">Trekker tilfeldig tema...</p>
+    </div>
+
+<script>
+// ==========================================
+// CONFIGURATION
+// ==========================================
+const TOPICS = [
+    {
+        id: 'industri',
+        icon: '🏭',
+        title: 'Den industrielle revolusjonen',
+        period: 'ca. 1760–1840',
+        description: 'Teknologiske gjennombrudd, urbanisering og sosiale omveltninger i Europa.',
+        tags: ['Teknologi', 'Urbanisering', 'Arbeiderliv', 'Dampmaskin'],
+        gradient: 'var(--gradient-earth)'
+    },
+    {
+        id: 'imperialisme',
+        icon: '🌍',
+        title: 'Imperialismen',
+        period: 'ca. 1870–1914',
+        description: 'Europeisk kolonisering, maktkamp og konsekvenser for koloniserte folk.',
+        tags: ['Kolonier', 'Maktkamp', 'Rasisme', 'Motstand'],
+        gradient: 'var(--gradient-royal)'
+    },
+    {
+        id: 'ww1',
+        icon: '⚔️',
+        title: 'Første verdenskrig',
+        period: '1914–1918',
+        description: 'Alliansesystemer, skyttergravskrig og Versailletraktaten.',
+        tags: ['Allianser', 'Skyttergravskrig', 'Versailles', 'Nasjonalisme'],
+        gradient: 'var(--gradient-fire)'
+    },
+    {
+        id: 'mellomkrig',
+        icon: '📉',
+        title: 'Mellomkrigstiden',
+        period: '1918–1939',
+        description: 'Økonomisk krise, fremveksten av fascisme, nazisme og kommunisme.',
+        tags: ['Wall Street', 'Fascisme', 'Nazisme', 'Weimar'],
+        gradient: 'var(--gradient-warm)'
+    },
+    {
+        id: 'ww2',
+        icon: '💥',
+        title: 'Andre verdenskrig',
+        period: '1939–1945',
+        description: 'Global krig, Holocaust, ideologisk kamp og atomvåpen.',
+        tags: ['Holocaust', 'D-dagen', 'Motstand', 'Kapitulasjon'],
+        gradient: 'linear-gradient(135deg, #ff4444, #880000)'
+    },
+    {
+        id: 'kaldkrig',
+        icon: '🧊',
+        title: 'Den kalde krigen',
+        period: '1945–1950+',
+        description: 'Supermaktoppgjør, jernteppet, Trumandoktrinen og Marshallplanen.',
+        tags: ['Jernteppet', 'NATO', 'Truman', 'Marshallplanen'],
+        gradient: 'var(--gradient-cool)'
+    }
+];
+
+const LEVEL_LABELS = {
+    grunnleggende: { text: 'Karakter 2–3', color: 'var(--accent-green)', bg: 'rgba(78,205,196,0.1)', border: 'rgba(78,205,196,0.2)' },
+    videregaende: { text: 'Karakter 4–5', color: 'var(--accent-gold)', bg: 'rgba(240,179,90,0.1)', border: 'rgba(240,179,90,0.2)' },
+    hoyt: { text: 'Karakter 6', color: 'var(--accent-purple)', bg: 'rgba(155,109,255,0.1)', border: 'rgba(155,109,255,0.2)' }
+};
+
+const MODE_LABELS = {
+    eksamen: '🎓 Simulert eksamen',
+    lynquiz: '⚡ Lyn-quiz',
+    advokat: '😈 Djevelens advokat'
+};
+
+// ==========================================
+// STATE
+// ==========================================
+let state = {
+    topic: null,
+    level: null,
+    mode: null,
+    messages: [],
+    conversationHistory: [],
+    questionCount: 0,
+    timerInterval: null,
+    timeRemaining: 0,
+    isWaitingForAI: false
+};
+
+// ==========================================
+// SYSTEM PROMPT BUILDER
+// ==========================================
+function buildSystemPrompt() {
+    const topic = TOPICS.find(t => t.id === state.topic);
+    const levelDescriptions = {
+        grunnleggende: `Karakter 2–3: Fokus på redegjørelse og faktakunnskap. Still enkle, rette spørsmål. Bruk verb som "redegjør for", "beskriv", "nevn", "hva var".`,
+        videregaende: `Karakter 4–5: Fokus på forklaring av årsaker og virkninger. Still spørsmål som krever at eleven forklarer sammenhenger. Bruk verb som "forklar", "sammenlign", "hva var årsaken til", "hvilke konsekvenser fikk".`,
+        hoyt: `Karakter 6: Fokus på drøfting, lange linjer, ulike perspektiver og historiebruk. Still spørsmål som krever at eleven ser ulike sider, problematiserer og trekker linjer mellom epoker. Bruk verb som "drøft", "vurder", "i hvilken grad", "kan man si at".`
+    };
+
+    const modeInstructions = {
+        eksamen: `MODUS: Simulert eksamen (15 minutter)
+- Oppfør deg som en formell, men vennlig sensor i en ekte muntlig eksamen.
+- Start med et åpent, overordnet spørsmål om temaet.
+- Vent på elevens svar. Still oppfølgingsspørsmål basert på det eleven sier.
+- Etter 3–4 runder med spørsmål, gi en kort mellomevaluering.
+- Gå gradvis dypere. Utforsk elevens forståelse av årsakssammenhenger.
+- Vær oppmuntrende, men faglig presis.`,
+
+        lynquiz: `MODUS: Lyn-quiz (rask faktasjekk)
+- Still korte, presise spørsmål som tester faktakunnskap.
+- Gi umiddelbart kort tilbakemelding etter hvert svar: riktig, delvis riktig, eller feil med riktig svar.
+- Still totalt 10 spørsmål. Nummerer hvert spørsmål.
+- Varier mellom ulike aspekter av temaet.
+- Etter alle 10 spørsmål, gi en oppsummering med poengsum og hva eleven bør jobbe mer med.`,
+
+        advokat: `MODUS: Djevelens advokat
+- Vent til eleven kommer med en påstand eller et argument.
+- Utfordre ALLTID det eleven sier, selv om det er riktig. Presenter motargumenter, alternative perspektiver og nyanser.
+- Tving eleven til å forsvare og utdype argumentene sine.
+- Bruk formuleringer som: "Men hva med...", "Er du sikker? Noen historikere mener at...", "Kan man ikke like gjerne argumentere for at...".
+- Vær provoserende men faglig korrekt. Målet er å skjerpe argumentasjonen, ikke å forvirre.
+- Start med å be eleven komme med en påstand om temaet.`
+    };
+
+    return `Rolle og kontekst:
+Du er en kunnskapsrik, støttende, men faglig streng historielærer og eksaminator for VG3 i norsk videregående skole. Du gjennomfører en muntlig vurdering med en elev.
+
+TEMA: ${topic.title} (${topic.period})
+${topic.description}
+
+VANSKELIGHETSGRAD: ${levelDescriptions[state.level]}
+
+${modeInstructions[state.mode]}
+
+VIKTIGE RETNINGSLINJER:
+1. Still bare ETT spørsmål av gangen. Vent alltid på elevens svar før du går videre.
+2. Svarene dine skal alltid være på norsk (bokmål).
+3. Vær opptatt av sammenhenger mellom hendelser (f.eks. hvordan Versailletraktaten peker mot 2. verdenskrig).
+4. Bruk et presist fagspråk, men vær oppmuntrende og støttende.
+5. Hvis eleven svarer kort eller upresist, still oppfølgingsspørsmål som hjelper dem å utdype. Gi aldri hele svaret, bare hint.
+6. Referer til relevante begreper fra læreplanen i historie (HIS01-03): årsaksforklaringer, omstridthet, historiebruk, menneskesyn og ideologiske skiller.
+7. Hold svarene dine konsise – ikke skriv lange avsnitt. En sensor snakker kort og presist.
+8. IKKE bruk markdown-formatering (**, ##, osv.). Skriv ren tekst.
+
+DINE FAGLIGE FOKUSOMRÅDER:
+- Den industrielle revolusjonen (årsaker og sosiale/økonomiske følger)
+- Imperialismen (motivasjoner, maktkamp og konsekvenser)
+- Første verdenskrig (årsaker, allianser og Versailletraktaten)
+- Mellomkrigstiden (økonomisk krise, totalitære ideologier: fascisme, nazisme, kommunisme)
+- Andre verdenskrig (forløp, ideologisk kamp og utfall)
+- Den kalde krigen (oppstarten, jernteppet, Trumandoktrinen og Marshallplanen)
+
+Start nå med å ønske eleven velkommen og still det første spørsmålet om ${topic.title}.`;
+}
+
+function buildAssessmentPrompt() {
+    const topic = TOPICS.find(t => t.id === state.topic);
+    const conversationText = state.messages.map(m => {
+        return `${m.role === 'sensor' ? 'SENSOR' : 'ELEV'}: ${m.text}`;
+    }).join('\n\n');
+
+    return `Du er en erfaren sensor i historie VG3 (norsk videregående skole, LK20). Du har nettopp gjennomført en muntlig eksaminasjon med en elev.
+
+TEMA: ${topic.title}
+NIVÅ: ${LEVEL_LABELS[state.level].text}
+MODUS: ${MODE_LABELS[state.mode]}
+
+HER ER SAMTALEN:
+${conversationText}
+
+Gi en grundig vurdering av elevens prestasjon. Vurder:
+1. Faglig kunnskap og forståelse
+2. Evne til å se sammenhenger og årsaksforklaringer
+3. Bruk av fagbegreper
+4. Evne til drøfting og refleksjon
+5. Muntlig fremstilling (basert på svarenes kvalitet)
+
+Svar i dette EKSAKTE JSON-formatet (ingen markdown, bare ren JSON):
+{
+    "karakter": 4,
+    "oppsummering": "En kort oppsummering av prestasjonen (2-3 setninger).",
+    "styrker": ["Styrke 1", "Styrke 2", "Styrke 3"],
+    "forbedringer": ["Forbedring 1", "Forbedring 2", "Forbedring 3"],
+    "temaerDekket": ["Tema 1", "Tema 2"],
+    "tipsVidere": "Et konkret tips for å heve nivået ytterligere.",
+    "laereplanKobling": "Kobling til kompetansemål i HIS01-03 og hva eleven bør fokusere på."
+}`;
+}
+
+// ==========================================
+// INITIALIZATION
+// ==========================================
+function init() {
+    renderTopicGrid();
+}
+
+function renderTopicGrid() {
+    const grid = document.getElementById('topicGrid');
+    let html = '';
+
+    TOPICS.forEach(topic => {
+        html += `
+            <div class="topic-card" data-topic="${topic.id}" onclick="selectTopic('${topic.id}')">
+                <span class="topic-icon">${topic.icon}</span>
+                <h3>${topic.title}</h3>
+                <div class="topic-period">${topic.period}</div>
+                <div class="topic-desc">${topic.description}</div>
+                <div class="topic-tags">
+                    ${topic.tags.map(t => `<span class="topic-tag">${t}</span>`).join('')}
+                </div>
+            </div>
+        `;
+    });
+
+    // Random card
+    html += `
+        <div class="random-card" onclick="startLottery()">
+            <span class="dice">🎲</span>
+            <div>
+                <h3>Tilfeldig trekning</h3>
+                <p>Simuler ekte eksamen – bli trukket ut i et tilfeldig tema!</p>
+            </div>
+        </div>
+    `;
+
+    grid.innerHTML = html;
+}
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+function selectTopic(topicId) {
+    state.topic = topicId;
+    const topic = TOPICS.find(t => t.id === topicId);
+
+    document.getElementById('chosenTopicBadge').innerHTML = `${topic.icon} ${topic.title}`;
+
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('levelScreen').classList.remove('hidden');
+}
+
+function selectLevel(level) {
+    state.level = level;
+    const topic = TOPICS.find(t => t.id === state.topic);
+
+    document.getElementById('chosenSummaryBadge').innerHTML =
+        `${topic.icon} ${topic.title} · ${LEVEL_LABELS[level].text}`;
+
+    document.getElementById('levelScreen').classList.add('hidden');
+    document.getElementById('modeScreen').classList.remove('hidden');
+}
+
+function selectMode(mode) {
+    state.mode = mode;
+
+    document.getElementById('modeScreen').classList.add('hidden');
+    document.getElementById('examSession').classList.remove('hidden');
+
+    setupExamSession();
+}
+
+function goToLevel() {
+    document.getElementById('modeScreen').classList.add('hidden');
+    document.getElementById('levelScreen').classList.remove('hidden');
+}
+
+function confirmGoHome() {
+    if (state.messages.length > 1) {
+        if (!confirm('Er du sikker på at du vil avslutte? Samtalen vil bli slettet.')) return;
+    }
+    goHome();
+}
+
+function goHome() {
+    clearInterval(state.timerInterval);
+    state = {
+        topic: null, level: null, mode: null,
+        messages: [], conversationHistory: [],
+        questionCount: 0, timerInterval: null,
+        timeRemaining: 0, isWaitingForAI: false
+    };
+
+    document.querySelectorAll('#startScreen, #levelScreen, #modeScreen, #examSession, #assessmentScreen')
+        .forEach(el => el.classList.add('hidden'));
+    document.getElementById('startScreen').classList.remove('hidden');
+}
+
+// ==========================================
+// LOTTERY (RANDOM TOPIC)
+// ==========================================
+function startLottery() {
+    const overlay = document.getElementById('lotteryOverlay');
+    const wheel = document.getElementById('lotteryWheel');
+    const topicEl = document.getElementById('lotteryTopic');
+    const statusEl = document.getElementById('lotteryStatus');
+
+    overlay.classList.remove('hidden');
+    wheel.classList.add('spinning');
+    statusEl.textContent = 'Trekker tilfeldig tema...';
+
+    let spinCount = 0;
+    const totalSpins = 25;
+    let currentIndex = 0;
+    let delay = 80;
+
+    function nextSpin() {
+        currentIndex = (currentIndex + 1) % TOPICS.length;
+        const t = TOPICS[currentIndex];
+        topicEl.innerHTML = `<span class="topic-emoji">${t.icon}</span>${t.title}`;
+
+        spinCount++;
+        if (spinCount >= totalSpins) {
+            wheel.classList.remove('spinning');
+
+            // Pick a truly random one
+            const randomIndex = Math.floor(Math.random() * TOPICS.length);
+            const chosen = TOPICS[randomIndex];
+            topicEl.innerHTML = `<span class="topic-emoji">${chosen.icon}</span>${chosen.title}`;
+            statusEl.innerHTML = `✅ Du er trukket ut i <strong>${chosen.title}</strong>!`;
+
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                selectTopic(chosen.id);
+            }, 2000);
+        } else {
+            delay += spinCount * 4;
+            setTimeout(nextSpin, delay);
+        }
+    }
+
+    setTimeout(nextSpin, delay);
+}
+
+// ==========================================
+// EXAM SESSION
+// ==========================================
+function setupExamSession() {
+    const topic = TOPICS.find(t => t.id === state.topic);
+    const level = LEVEL_LABELS[state.level];
+
+    // Top bar
+    document.getElementById('examTopicBadge').innerHTML = `${topic.icon} ${topic.title}`;
+    const levelBadge = document.getElementById('examLevelBadge');
+    levelBadge.textContent = level.text;
+    levelBadge.style.background = level.bg;
+    levelBadge.style.color = level.color;
+    levelBadge.style.border = `1px solid ${level.border}`;
+
+    // Timer
+    const durations = { eksamen: 15 * 60, lynquiz: 5 * 60, advokat: 10 * 60 };
+    state.timeRemaining = durations[state.mode];
+    startExamTimer();
+
+    // Quick actions
+    renderQuickActions();
+
+    // Clear chat
+    document.getElementById('chatArea').innerHTML = '';
+    state.messages = [];
+    state.conversationHistory = [];
+    state.questionCount = 0;
+
+    updateQuestionCounter();
+
+    // Start conversation with AI
+    startConversation();
+}
+
+function renderQuickActions() {
+    const quickActions = document.getElementById('quickActions');
+    const actions = [
+        { text: '💡 Gi meg et hint', msg: 'Kan du gi meg et hint?' },
+        { text: '🔄 Gjenta spørsmålet', msg: 'Kan du gjenta spørsmålet?' },
+        { text: '📖 Forklar begrepet', msg: 'Kan du forklare det begrepet du brukte?' },
+    ];
+
+    quickActions.innerHTML = actions.map(a =>
+        `<button class="quick-action" onclick="sendQuickAction('${a.msg}')">${a.text}</button>`
+    ).join('');
+}
+
+function startExamTimer() {
+    updateTimerDisplay();
+    state.timerInterval = setInterval(() => {
+        state.timeRemaining--;
+        if (state.timeRemaining <= 0) {
+            state.timeRemaining = 0;
+            clearInterval(state.timerInterval);
+            requestAssessment();
+        }
+        updateTimerDisplay();
+    }, 1000);
+}
+
+function updateTimerDisplay() {
+    const m = Math.floor(state.timeRemaining / 60);
+    const s = state.timeRemaining % 60;
+    const display = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    document.getElementById('examTimerDisplay').textContent = display;
+
+    const timer = document.getElementById('examTimer');
+    timer.className = 'exam-timer';
+    if (state.timeRemaining < 60) timer.classList.add('critical');
+    else if (state.timeRemaining < 180) timer.classList.add('warning');
+}
+
+function updateQuestionCounter() {
+    document.getElementById('questionCounter').textContent = `Spørsmål: ${state.questionCount}`;
+}
+
+// ==========================================
+// CHAT
+// ==========================================
+function addMessage(role, text) {
+    const msg = { role, text, time: new Date() };
+    state.messages.push(msg);
+
+    if (role === 'sensor') state.questionCount++;
+    updateQuestionCounter();
+
+    const chatArea = document.getElementById('chatArea');
+    const avatar = role === 'sensor' ? '🎓' : '🧑‍🎓';
+    const label = role === 'sensor' ? 'Sensor' : 'Deg';
+
+    const div = document.createElement('div');
+    div.className = `message ${role}`;
+    div.innerHTML = `
+        <div class="message-avatar">${avatar}</div>
+        <div class="message-bubble">
+            <span class="message-label">${label}</span>
+            <p>${text.replace(/\n/g, '<br>')}</p>
+        </div>
+    `;
+
+    chatArea.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function showTypingIndicator() {
+    const chatArea = document.getElementById('chatArea');
+    const div = document.createElement('div');
+    div.className = 'message sensor';
+    div.id = 'typingIndicator';
+    div.innerHTML = `
+        <div class="message-avatar">🎓</div>
+        <div class="message-bubble">
+            <span class="message-label">Sensor</span>
+            <div class="typing-indicator">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+    chatArea.appendChild(div);
+    div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+}
+
+function removeTypingIndicator() {
+    const el = document.getElementById('typingIndicator');
+    if (el) el.remove();
+}
+
+async function sendMessage() {
+    const input = document.getElementById('userInput');
+    const text = input.value.trim();
+    if (!text || state.isWaitingForAI) return;
+
+    input.value = '';
+    autoResize(input);
+    addMessage('elev', text);
+
+    await callAI(text);
+}
+
+function sendQuickAction(msg) {
+    if (state.isWaitingForAI) return;
+    document.getElementById('userInput').value = msg;
+    sendMessage();
+}
+
+function handleInputKey(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+    }
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 150) + 'px';
+}
+
+// ==========================================
+// AI COMMUNICATION
+// ==========================================
+function getApiKey() {
+    return 'AIzaSyDEJdeR5gfoebl4Io1iTwez6s7Vca14yBU';
+}
+
+async function findBestModel(apiKey) {
+    try {
+        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        if (!resp.ok) throw new Error('API error');
+        const data = await resp.json();
+
+        if (data && data.models) {
+            const models = data.models.filter(m =>
+                m.supportedGenerationMethods &&
+                m.supportedGenerationMethods.includes('generateContent') &&
+                m.name.includes('flash') &&
+                !m.name.includes('vision')
+            );
+            if (models.length > 0) {
+                models.sort((a, b) => b.name.localeCompare(a.name));
+                return models[0].name;
+            }
+        }
+    } catch (e) {
+        console.warn('Model discovery failed, using fallback');
+    }
+    return 'models/gemini-2.0-flash';
+}
+
+async function startConversation() {
+    state.isWaitingForAI = true;
+    document.getElementById('sendBtn').disabled = true;
+    showTypingIndicator();
+
+    try {
+        const apiKey = getApiKey();
+        const model = await findBestModel(apiKey);
+        const systemPrompt = buildSystemPrompt();
+
+        state.conversationHistory = [
+            { role: 'user', parts: [{ text: systemPrompt + '\n\nStart nå.' }] }
+        ];
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: state.conversationHistory,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+            })
+        });
+
+        if (!response.ok) throw new Error('Kunne ikke koble til KI. Sjekk API-nøkkelen.');
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Beklager, noe gikk galt. Prøv igjen.';
+
+        state.conversationHistory.push({ role: 'model', parts: [{ text }] });
+
+        removeTypingIndicator();
+        addMessage('sensor', text);
+
+    } catch (err) {
+        removeTypingIndicator();
+        addMessage('sensor', `❌ ${err.message}`);
+    } finally {
+        state.isWaitingForAI = false;
+        document.getElementById('sendBtn').disabled = false;
+    }
+}
+
+async function callAI(userText) {
+    state.isWaitingForAI = true;
+    document.getElementById('sendBtn').disabled = true;
+    showTypingIndicator();
+
+    try {
+        const apiKey = getApiKey();
+        const model = await findBestModel(apiKey);
+
+        state.conversationHistory.push({ role: 'user', parts: [{ text: userText }] });
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: state.conversationHistory,
+                generationConfig: { temperature: 0.7, maxOutputTokens: 800 }
+            })
+        });
+
+        if (!response.ok) throw new Error('KI-feil. Prøv igjen.');
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Beklager, noe gikk galt.';
+
+        state.conversationHistory.push({ role: 'model', parts: [{ text }] });
+
+        removeTypingIndicator();
+        addMessage('sensor', text);
+
+    } catch (err) {
+        removeTypingIndicator();
+        addMessage('sensor', `❌ Feil: ${err.message}`);
+    } finally {
+        state.isWaitingForAI = false;
+        document.getElementById('sendBtn').disabled = false;
+    }
+}
+
+// ==========================================
+// ASSESSMENT
+// ==========================================
+async function requestAssessment() {
+    if (state.messages.length < 2) {
+        alert('Du må svare på minst ett spørsmål før du kan få vurdering.');
+        return;
+    }
+
+    clearInterval(state.timerInterval);
+    state.isWaitingForAI = true;
+
+    // Show loading in assessment screen
+    document.getElementById('examSession').classList.add('hidden');
+    const assessEl = document.getElementById('assessmentScreen');
+    assessEl.classList.remove('hidden');
+    assessEl.innerHTML = `
+        <div class="assessment-screen" style="text-align:center;padding:4rem 2rem;">
+            <span style="font-size:3rem;display:block;margin-bottom:1rem;animation:float 2s ease infinite;">📋</span>
+            <h2 style="font-size:1.5rem;margin-bottom:0.5rem;">Sensoren vurderer prestasjonen din...</h2>
+            <p style="color:var(--text-muted);">Dette kan ta noen sekunder.</p>
+            <div class="loading-dots" style="margin-top:1.5rem;">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    `;
+
+    try {
+        const apiKey = getApiKey();
+        const model = await findBestModel(apiKey);
+        const prompt = buildAssessmentPrompt();
+
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                generationConfig: { temperature: 0.3, maxOutputTokens: 1500 }
+            })
+        });
+
+        if (!response.ok) throw new Error('Vurderingsfeil');
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) throw new Error('Kunne ikke tolke vurderingen.');
+
+        const result = JSON.parse(jsonMatch[0]);
+        displayAssessment(result);
+
+    } catch (err) {
+        assessEl.innerHTML = `
+            <div class="assessment-screen" style="text-align:center;padding:4rem 2rem;">
+                <span style="font-size:3rem;display:block;margin-bottom:1rem;">❌</span>
+                <h2 style="font-size:1.5rem;margin-bottom:0.5rem;">Noe gikk galt</h2>
+                <p style="color:var(--text-muted);">${err.message}</p>
+                <button class="btn btn-primary" onclick="goHome()" style="margin-top:1.5rem;">🏠 Tilbake</button>
+            </div>
+        `;
+    }
+}
+
+function displayAssessment(result) {
+    const topic = TOPICS.find(t => t.id === state.topic);
+    const k = result.karakter || 0;
+    let gradeClass = 'low';
+    let emoji = '📚';
+    if (k >= 5) { gradeClass = 'high'; emoji = '🌟'; }
+    else if (k >= 3) { gradeClass = 'mid'; emoji = '👍'; }
+
+    const assessEl = document.getElementById('assessmentScreen');
+    assessEl.innerHTML = `
+        <div class="assessment-screen">
+            <div class="assessment-header">
+                <span class="emoji">${emoji}</span>
+                <h2>Vurdering fullført!</h2>
+                <p style="color:var(--text-secondary);margin-top:0.5rem;">${topic.icon} ${topic.title} · ${LEVEL_LABELS[state.level].text} · ${MODE_LABELS[state.mode]}</p>
+            </div>
+
+            <div class="assessment-grade">
+                <div class="grade-circle ${gradeClass}">${k}</div>
+                <p style="color:var(--text-secondary);font-size:0.95rem;line-height:1.7;max-width:600px;margin:0 auto;">
+                    ${result.oppsummering || ''}
+                </p>
+            </div>
+
+            <div class="assessment-cards">
+                <div class="assess-card strengths">
+                    <h3>✅ Styrker</h3>
+                    <ul>
+                        ${(result.styrker || []).map(s => `<li>${s}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="assess-card improvements">
+                    <h3>🔧 Forbedringsområder</h3>
+                    <ul>
+                        ${(result.forbedringer || []).map(f => `<li>${f}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="assess-card topics-covered">
+                    <h3>📚 Temaer som ble dekket</h3>
+                    <ul>
+                        ${(result.temaerDekket || []).map(t => `<li>${t}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="assess-card tips">
+                    <h3>💡 Tips for å heve karakteren</h3>
+                    <p>${result.tipsVidere || ''}</p>
+                </div>
+                <div class="assess-card full-width" style="border-color: rgba(155,109,255,0.2); background: rgba(155,109,255,0.03);">
+                    <h3 style="color: var(--accent-purple);">📝 Kobling til læreplanen (HIS01-03)</h3>
+                    <p>${result.laereplanKobling || ''}</p>
+                </div>
+            </div>
+
+            <div class="assessment-actions">
+                <button class="btn btn-primary" onclick="goHome()">🏠 Ny øvelse</button>
+                <button class="btn btn-warm" onclick="retryWithSameTopic()">🔄 Prøv samme tema igjen</button>
+                <button class="btn btn-outline" onclick="showTranscript()">📃 Vis samtalelogg</button>
+            </div>
+        </div>
+    `;
+}
+
+function retryWithSameTopic() {
+    const savedTopic = state.topic;
+    const savedLevel = state.level;
+
+    clearInterval(state.timerInterval);
+    state.messages = [];
+    state.conversationHistory = [];
+    state.questionCount = 0;
+    state.isWaitingForAI = false;
+
+    state.topic = savedTopic;
+    state.level = savedLevel;
+
+    document.getElementById('assessmentScreen').classList.add('hidden');
+    document.getElementById('modeScreen').classList.remove('hidden');
+
+    const topic = TOPICS.find(t => t.id === savedTopic);
+    document.getElementById('chosenSummaryBadge').innerHTML =
+        `${topic.icon} ${topic.title} · ${LEVEL_LABELS[savedLevel].text}`;
+}
+
+function showTranscript() {
+    const topic = TOPICS.find(t => t.id === state.topic);
+    let transcript = `SAMTALELOGG - ${topic.title}\n${'='.repeat(50)}\n\n`;
+
+    state.messages.forEach(m => {
+        const label = m.role === 'sensor' ? 'SENSOR' : 'ELEV';
+        transcript += `${label}:\n${m.text}\n\n`;
+    });
+
+    // Create a modal with the transcript
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+    modal.innerHTML = `
+        <div class="modal" style="max-width:650px;max-height:80vh;overflow-y:auto;">
+            <h3>📃 Samtalelogg</h3>
+            <p>${topic.icon} ${topic.title} · ${state.messages.length} meldinger</p>
+            <pre id="transcriptText" style="white-space:pre-wrap;font-size:0.82rem;line-height:1.7;color:var(--text-secondary);background:rgba(0,0,0,0.2);padding:1rem;border-radius:10px;max-height:60vh;overflow-y:auto;font-family:'Inter',sans-serif;"></pre>
+            <div class="modal-buttons" style="margin-top:1rem;">
+                <button class="btn btn-outline btn-sm" onclick="this.closest('.modal-overlay').remove()">Lukk</button>
+                <button class="btn btn-primary btn-sm" id="copyTranscriptBtn">📋 Kopier</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+
+    // Set transcript text safely
+    document.getElementById('transcriptText').textContent = transcript;
+
+    // Add copy handler
+    document.getElementById('copyTranscriptBtn').onclick = function() {
+        navigator.clipboard.writeText(transcript).then(() => {
+            this.textContent = '✅ Kopiert!';
+            setTimeout(() => this.textContent = '📋 Kopier', 2000);
+        });
+    };
+}
+
+
+
+// ==========================================
+// INIT
+// ==========================================
+init();
+</script>
+</body>
+</html>
